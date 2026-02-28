@@ -1,36 +1,42 @@
 import { CampaignModel } from "../../infrastructure/database/CampaignModel";
 import { ProspectModel } from "../../infrastructure/database/ProspectModel";
 
-export const generateCampaignSummary = async (campaignId: string) => {
-  const campaign = await CampaignModel.findById(campaignId);
+export const generateCampaignSummary = async (campaignId: string, userId: string) => {
+  const campaign = await CampaignModel.findOne({ _id: campaignId, userId }).lean();
   if (!campaign) throw new Error("Campaign not found");
 
-  const totalProspects = await ProspectModel.countDocuments({ campaignId });
+  const query = { campaignId, userId };
 
-  const scored = await ProspectModel.countDocuments({
-    campaignId,
-    status: { $in: ["scored", "email_generated", "sent", "responded", "backlink_secured"] }
-  });
-
-  const emailsGenerated = await ProspectModel.countDocuments({
-    campaignId,
-    status: { $in: ["email_generated", "sent", "responded", "backlink_secured"] }
-  });
-
-  const sent = await ProspectModel.countDocuments({
-    campaignId,
-    status: { $in: ["sent", "responded", "backlink_secured"] }
-  });
-
-  const responded = await ProspectModel.countDocuments({
-    campaignId,
-    status: { $in: ["responded", "backlink_secured"] }
-  });
-
-  const backlinks = await ProspectModel.countDocuments({
-    campaignId,
-    status: "backlink_secured"
-  });
+  const [
+    totalProspects,
+    scored,
+    emailsGenerated,
+    sent,
+    responded,
+    backlinks
+  ] = await Promise.all([
+    ProspectModel.countDocuments(query),
+    ProspectModel.countDocuments({
+      ...query,
+      status: { $in: ["scored", "email_generated", "sent", "responded", "backlink_secured"] }
+    }),
+    ProspectModel.countDocuments({
+      ...query,
+      status: { $in: ["email_generated", "sent", "responded", "backlink_secured"] }
+    }),
+    ProspectModel.countDocuments({
+      ...query,
+      status: { $in: ["sent", "responded", "backlink_secured"] }
+    }),
+    ProspectModel.countDocuments({
+      ...query,
+      status: { $in: ["responded", "backlink_secured"] }
+    }),
+    ProspectModel.countDocuments({
+      ...query,
+      status: "backlink_secured"
+    })
+  ]);
 
   const responseRate = sent === 0 ? 0 : (responded / sent) * 100;
 

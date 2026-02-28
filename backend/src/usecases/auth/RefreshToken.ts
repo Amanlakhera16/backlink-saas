@@ -1,19 +1,9 @@
-import jwt from "jsonwebtoken";
-import { env } from "../../config/env";
-import { AppError } from "../../middlewares/errorHandler";
+import { rotateRefreshToken, revokeRefreshToken } from "./tokenService";
 
-export const refreshAccessToken = (refreshToken: string) => {
-  try {
-    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as any;
+export const refreshAccessToken = async (refreshToken: string, ip?: string) => {
+  return rotateRefreshToken(refreshToken, ip);
+};
 
-    const accessToken = jwt.sign(
-      { id: decoded.id },
-      env.JWT_ACCESS_SECRET,
-      { expiresIn: "15m" }
-    );
-
-    return accessToken;
-  } catch {
-    throw new AppError(401, "Invalid refresh token");
-  }
+export const logoutRefreshToken = async (refreshToken: string, ip?: string) => {
+  return revokeRefreshToken(refreshToken, ip);
 };

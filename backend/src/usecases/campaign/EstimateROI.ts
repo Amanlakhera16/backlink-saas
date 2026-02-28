@@ -1,10 +1,13 @@
 import { ProspectModel } from "../../infrastructure/database/ProspectModel";
 
-export const estimateROI = async (campaignId: string) => {
+export const estimateROI = async (campaignId: string, userId: string) => {
   const backlinks = await ProspectModel.find({
     campaignId,
+    userId,
     status: "backlink_secured"
-  });
+  })
+    .select("domainAuthority")
+    .lean();
 
   if (backlinks.length === 0) {
     return {
@@ -18,11 +21,9 @@ export const estimateROI = async (campaignId: string) => {
     backlinks.length;
 
   const estimatedValue = avgDA * 10 * backlinks.length;
+  const campaignCost = 100;
 
-  const campaignCost = 100; // baseline manual effort cost
-
-  const roiPercentage =
-    ((estimatedValue - campaignCost) / campaignCost) * 100;
+  const roiPercentage = ((estimatedValue - campaignCost) / campaignCost) * 100;
 
   return {
     estimatedValue: Number(estimatedValue.toFixed(2)),

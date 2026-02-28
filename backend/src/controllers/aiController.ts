@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { scoreProspects } from "../usecases/prospect/ScoreProspects";
 import { generateOutreach } from "../usecases/outreach/GenerateOutreach";
 import { updateProspectStatus } from "../usecases/outreach/UpdateProspectStatus";
@@ -11,34 +11,43 @@ export const score = async (req: AuthRequest, res: Response, next: NextFunction)
     const campaign = await CampaignModel.findOne({
       _id: req.params.id,
       userId: req.user!.id
-    });
+    }).lean();
 
     if (!campaign) {
       throw new AppError(403, "Forbidden");
     }
 
-    const result = await scoreProspects(campaign._id.toString());
-
+    const result = await scoreProspects(campaign._id.toString(), req.user!.id);
     res.json(result);
   } catch (error) {
     next(error);
   }
 };
 
-export const generate = async (req: Request, res: Response, next: NextFunction) => {
+export const generate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const result = await generateOutreach(req.params.id);
+    const campaign = await CampaignModel.findOne({
+      _id: req.params.id,
+      userId: req.user!.id
+    }).lean();
+
+    if (!campaign) {
+      throw new AppError(403, "Forbidden");
+    }
+
+    const result = await generateOutreach(campaign._id.toString(), req.user!.id);
     res.json(result);
   } catch (error) {
     next(error);
   }
 };
 
-export const updateStatus = async (req: Request, res: Response, next: NextFunction) => {
+export const updateStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const result = await updateProspectStatus(
       req.params.prospectId,
-      req.body.status
+      req.body.status,
+      req.user!.id
     );
     res.json(result);
   } catch (error) {

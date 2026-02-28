@@ -4,7 +4,7 @@ import { env } from "../config/env";
 import { AppError } from "./errorHandler";
 
 export interface AuthRequest extends Request {
-  user?: { id: string; role: string };
+  user?: { id: string; role: string; tenantId: string };
 }
 
 export const authenticate = (
@@ -14,15 +14,20 @@ export const authenticate = (
 ) => {
   const header = req.headers.authorization;
 
-  if (!header) throw new AppError(401, "Unauthorized");
+  if (!header) return next(new AppError(401, "Unauthorized"));
 
   const token = header.split(" ")[1];
+  if (!token) return next(new AppError(401, "Unauthorized"));
 
   try {
-    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as any;
-    req.user = decoded;
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET, {
+      issuer: env.JWT_ISSUER,
+      audience: env.JWT_AUDIENCE
+    }) as any;
+
+    req.user = { id: decoded.id, role: decoded.role, tenantId: decoded.id };
     next();
   } catch {
-    throw new AppError(401, "Invalid token");
+    return next(new AppError(401, "Invalid token"));
   }
 };

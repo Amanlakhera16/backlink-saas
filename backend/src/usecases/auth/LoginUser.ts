@@ -1,27 +1,16 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { UserModel } from "../../infrastructure/database/UserModel";
-import { env } from "../../config/env";
 import { AppError } from "../../middlewares/errorHandler";
+import { issueTokens } from "./tokenService";
 
-export const loginUser = async (email: string, password: string) => {
-  const user = await UserModel.findOne({ email });
+export const loginUser = async (email: string, password: string, ip?: string) => {
+  const normalized = email.trim().toLowerCase();
+  const user = await UserModel.findOne({ email: normalized });
   if (!user) throw new AppError(400, "Invalid credentials");
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) throw new AppError(400, "Invalid credentials");
 
-  const accessToken = jwt.sign(
-    { id: user._id, role: user.role },
-    env.JWT_ACCESS_SECRET,
-    { expiresIn: "15m" }
-  );
-
-  const refreshToken = jwt.sign(
-    { id: user._id },
-    env.JWT_REFRESH_SECRET,
-    { expiresIn: "7d" }
-  );
-
-  return { accessToken, refreshToken };
+  const tokens = await issueTokens({ id: user._id.toString(), role: user.role }, ip);
+  return { tokens, user };
 };

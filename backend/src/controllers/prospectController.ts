@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { discoverProspects } from "../usecases/prospect/DiscoverProspects";
 import { AppError } from "../middlewares/errorHandler";
 import { CampaignModel } from "../infrastructure/database/CampaignModel";
@@ -9,13 +9,17 @@ export const discover = async (req: AuthRequest, res: Response, next: NextFuncti
     const campaign = await CampaignModel.findOne({
       _id: req.params.id,
       userId: req.user!.id
-    });
+    }).lean();
 
     if (!campaign) {
       throw new AppError(403, "Forbidden");
     }
 
-    const prospects = await discoverProspects(campaign._id.toString());
+    const prospects = await discoverProspects(
+      campaign._id.toString(),
+      req.user!.id,
+      campaign.niche
+    );
 
     res.json(prospects);
   } catch (error) {

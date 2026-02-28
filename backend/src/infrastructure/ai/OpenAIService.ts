@@ -1,15 +1,25 @@
 import OpenAI from "openai";
+import { z } from "zod";
 import { env } from "../../config/env";
+
+const scoreSchema = z.object({
+  score: z.number().min(0).max(100),
+  reason: z.string()
+});
+
+const emailSchema = z.object({
+  subject: z.string(),
+  body: z.string()
+});
 
 export class OpenAIService {
   private client = new OpenAI({
-    apiKey: env.OPENAI_API_KEY
+    apiKey: env.OPENAI_API_KEY,
+    maxRetries: 2
   });
 
-  // 🔒 Track last API call timestamp
   private lastCallTime = 0;
 
-  // 🔒 Simple 1 request per second limiter
   private async rateLimit() {
     const now = Date.now();
 
@@ -21,7 +31,6 @@ export class OpenAIService {
   }
 
   async scoreOpportunity(website: string, niche: string) {
-    // ✅ Apply rate limit before API call
     await this.rateLimit();
 
     const response = await this.client.chat.completions.create({
@@ -33,16 +42,7 @@ export class OpenAIService {
         },
         {
           role: "user",
-          content: `
-Score this website (0-100) for guest posting in niche "${niche}".
-Website: ${website}
-
-Return JSON:
-{
-  "score": number,
-  "reason": "short explanation"
-}
-`
+          content: `\nScore this website (0-100) for guest posting in niche "${niche}".\nWebsite: ${website}\n\nReturn JSON:\n{\n  "score": number,\n  "reason": "short explanation"\n}\n`
         }
       ],
       temperature: 0.3
@@ -51,10 +51,13 @@ Return JSON:
     const content = response.choices[0].message.content || "{}";
 
     try {
-      return JSON.parse(content);
+      const parsed = scoreSchema.safeParse(JSON.parse(content));
+      if (parsed.success) return parsed.data;
     } catch {
-      return { score: 50, reason: "Default score due to parsing issue" };
+      // fall through
     }
+
+    return { score: 50, reason: "Default score due to parsing issue" };
   }
 
   async generateOutreachEmail(data: {
@@ -62,7 +65,6 @@ Return JSON:
     niche: string;
     userWebsite: string;
   }) {
-    // ✅ Apply rate limit before API call
     await this.rateLimit();
 
     const response = await this.client.chat.completions.create({
@@ -74,20 +76,7 @@ Return JSON:
         },
         {
           role: "user",
-          content: `
-Generate a personalized guest post outreach email.
-
-Target Website: ${data.website}
-Our Website: ${data.userWebsite}
-Niche: ${data.niche}
-
-Keep it ethical, value-driven, and professional.
-Return:
-{
-  "subject": "...",
-  "body": "..."
-}
-`
+          content: `\nGenerate a personalized guest post outreach email.\n\nTarget Website: ${data.website}\nOur Website: ${data.userWebsite}\nNiche: ${data.niche}\n\nKeep it ethical, value-driven, and professional.\nReturn:\n{\n  "subject": "...",\n  "body": "..."\n}\n`
         }
       ],
       temperature: 0.7
@@ -96,12 +85,15 @@ Return:
     const content = response.choices[0].message.content || "{}";
 
     try {
-      return JSON.parse(content);
+      const parsed = emailSchema.safeParse(JSON.parse(content));
+      if (parsed.success) return parsed.data;
     } catch {
-      return {
-        subject: "Guest Post Collaboration",
-        body: content
-      };
+      // fall through
     }
+
+    return {
+      subject: "Guest Post Collaboration",
+      body: content
+    };
   }
 }
