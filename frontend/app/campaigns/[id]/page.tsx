@@ -16,9 +16,25 @@ export default function CampaignDetail() {
     }
   };
 
-  if (!id) return <div>Invalid campaign id.</div>;
+  const exportReport = async () => {
+    if (!id) return;
+    try {
+      const res = await api.get(`/campaigns/${id}/export-report`, {
+        responseType: "blob"
+      });
+      const blob = new Blob([res.data], { type: "text/markdown" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `campaign-${id}.md`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert("Export failed");
+    }
+  };
 
-  const baseURL = api.defaults.baseURL ?? "";
+  if (!id) return <div>Invalid campaign id.</div>;
 
   return (
     <div className="p-8 space-y-4">
@@ -36,14 +52,7 @@ export default function CampaignDetail() {
         Generate Outreach
       </button>
 
-      <button
-        onClick={() =>
-          window.open(
-            `${baseURL}/campaigns/${id}/export-report`
-          )
-        }
-        className="border p-2"
-      >
+      <button onClick={exportReport} className="border p-2">
         Export Report
       </button>
     </div>

@@ -7,6 +7,7 @@ import authRoutes from "./routes/authRoutes";
 import campaignRoutes from "./routes/campaignRoutes";
 import prospectRoutes from "./routes/prospectRoutes";
 import billingRoutes from "./routes/billingRoutes";
+import dashboardRoutes from "./routes/dashboardRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
 import { stripeWebhook } from "./controllers/stripeWebhookController";
 import { env } from "./config/env";
@@ -49,6 +50,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/campaigns", campaignRoutes);
 app.use("/api/prospects", prospectRoutes);
 app.use("/api/billing", billingRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use(errorHandler);
 

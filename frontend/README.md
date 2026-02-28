@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Backlink SaaS Frontend
+
+This is the Next.js (App Router) frontend for the Backlink SaaS product. It communicates with the backend API over HTTP and uses Axios for requests.
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies from the frontend directory.
+2. Start the dev server.
 
 ```bash
+cd frontend
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The frontend expects the backend to be running and reachable via the API base URL.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Set these in `frontend/.env.local`.
 
-## Learn More
+- `NEXT_PUBLIC_API_BASE_URL` - Base URL for the backend API. Must include the `/api` prefix. Example: `http://localhost:5000/api`.
 
-To learn more about Next.js, take a look at the following resources:
+No other environment variables are required by the current frontend code.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Integration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The frontend talks to the backend through the base URL above and uses these endpoints:
 
-## Deploy on Vercel
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/logout`
+- `GET /dashboard/stats`
+- `POST /campaigns`
+- `POST /campaigns/:id/discover`
+- `POST /campaigns/:id/score`
+- `POST /campaigns/:id/generate-outreach`
+- `GET /campaigns/:id/export-report`
+- `POST /billing/checkout` (expects `{ planId }` in the body)
+- `POST /billing/portal`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Note: the actual URLs sent over the network are `NEXT_PUBLIC_API_BASE_URL` + each path above (for example `http://localhost:5000/api/auth/login`).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+- `app/` - Next.js App Router pages and layouts.
+- `components/` - Shared UI components.
+- `hooks/` - Custom React hooks.
+- `lib/` - API client and utilities.
+- `providers/` - Context providers (React Query, etc.).
+- `public/` - Static assets.
+
+## Auth Notes
+
+- The backend returns an access token on login.
+- The frontend stores it in a cookie named `accessToken` and sends it as a Bearer token in `frontend/lib/api.ts`.
+- Ensure the backend `CORS_ORIGIN` includes the frontend URL (for example `http://localhost:3000`).
+
+## Scripts
+
+- `npm run dev` - Start the dev server.
+- `npm run build` - Build for production.
+- `npm run start` - Start the production build.
+- `npm run lint` - Run ESLint.
