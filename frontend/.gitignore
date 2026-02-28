@@ -1,0 +1,23 @@
+# Ignore both app node_modules
+backend/node_modules/
+frontend/node_modules/
+
+# Build folders
+backend/dist/
+frontend/.next/
+
+# Env files
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
