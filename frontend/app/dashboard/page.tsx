@@ -1,18 +1,20 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../../lib/api";
+import { api } from "@/lib/api";
 
 export default function DashboardPage() {
-  const { data } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["stats"],
     queryFn: async () => {
       const res = await api.get("/dashboard/stats");
       return res.data;
-    }
+    },
   });
 
-  if (!data) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Failed to load dashboard.</div>;
+  if (!data) return <div>No data found.</div>;
 
   return (
     <div className="p-8 space-y-4">

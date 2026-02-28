@@ -1,18 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { api } from "../../../lib/api";
+import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
-    const res = await api.post("/auth/login", { email, password });
-    localStorage.setItem("accessToken", res.data.accessToken);
-    router.push("/dashboard");
+    setError(null);
+    setIsLoading(true);
+    try {
+      const res = await api.post("/auth/login", { email, password });
+      if (res.data?.accessToken) {
+        document.cookie = `accessToken=${res.data.accessToken}; Path=/; SameSite=Lax`;
+      }
+      router.push("/dashboard");
+    } catch {
+      setError("Login failed. Check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -30,11 +42,13 @@ export default function LoginPage() {
           placeholder="Password"
           onChange={(e) => setPassword(e.target.value)}
         />
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <button
           className="bg-black text-white w-full py-2"
           onClick={handleLogin}
+          disabled={isLoading}
         >
-          Login
+          {isLoading ? "Signing in..." : "Login"}
         </button>
       </div>
     </div>

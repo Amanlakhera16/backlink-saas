@@ -7,11 +7,21 @@ import { useRouter } from "next/navigation";
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleRegister = async () => {
-    await api.post("/auth/register", { email, password });
-    router.push("/login");
+    setError(null);
+    setIsLoading(true);
+    try {
+      await api.post("/auth/register", { email, password });
+      router.push("/login");
+    } catch {
+      setError("Registration failed. Try a different email.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -29,11 +39,13 @@ export default function RegisterPage() {
           placeholder="Password"
           onChange={(e) => setPassword(e.target.value)}
         />
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <button
           className="bg-black text-white w-full py-2"
           onClick={handleRegister}
+          disabled={isLoading}
         >
-          Create Account
+          {isLoading ? "Creating..." : "Create Account"}
         </button>
       </div>
     </div>

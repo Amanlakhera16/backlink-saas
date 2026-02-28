@@ -4,12 +4,21 @@ import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 
 export default function CampaignDetail() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
 
   const run = async (action: string) => {
-    await api.post(`/campaigns/${id}/${action}`);
-    alert(`${action} completed`);
+    if (!id) return;
+    try {
+      await api.post(`/campaigns/${id}/${action}`);
+      alert(`${action} completed`);
+    } catch {
+      alert(`${action} failed`);
+    }
   };
+
+  if (!id) return <div>Invalid campaign id.</div>;
+
+  const baseURL = api.defaults.baseURL ?? "";
 
   return (
     <div className="p-8 space-y-4">
@@ -30,7 +39,7 @@ export default function CampaignDetail() {
       <button
         onClick={() =>
           window.open(
-            `http://localhost:5000/api/campaigns/${id}/export-report`
+            `${baseURL}/campaigns/${id}/export-report`
           )
         }
         className="border p-2"
