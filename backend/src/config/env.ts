@@ -16,11 +16,11 @@ const envSchema = z.object({
   ACCESS_TOKEN_TTL: z.string().default("15m"),
   REFRESH_TOKEN_TTL: z.string().default("7d"),
   OPENAI_API_KEY: z.string().min(1),
-  STRIPE_SECRET_KEY: z.string().min(1),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1),
-  STRIPE_PRICE_BASIC: z.string().min(1),
-  STRIPE_PRICE_PRO: z.string().min(1),
-  STRIPE_PRICE_ENTERPRISE: z.string().optional(),
+  STRIPE_SECRET_KEY: z.string().optional().default(""),
+  STRIPE_WEBHOOK_SECRET: z.string().optional().default(""),
+  STRIPE_PRICE_BASIC: z.string().optional().default(""),
+  STRIPE_PRICE_PRO: z.string().optional().default(""),
+  STRIPE_PRICE_ENTERPRISE: z.string().optional().default(""),
   STRIPE_SUCCESS_URL: z.string().min(1),
   STRIPE_CANCEL_URL: z.string().min(1),
   CORS_ORIGIN: z.string().default(""),
@@ -35,6 +35,37 @@ const envSchema = z.object({
       path: ["REDIS_URL"],
       message: "REDIS_URL is required when REDIS_ENABLED=true"
     });
+  }
+
+  if (value.NODE_ENV === "production") {
+    if (!value.STRIPE_SECRET_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["STRIPE_SECRET_KEY"],
+        message: "STRIPE_SECRET_KEY is required in production"
+      });
+    }
+    if (!value.STRIPE_WEBHOOK_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["STRIPE_WEBHOOK_SECRET"],
+        message: "STRIPE_WEBHOOK_SECRET is required in production"
+      });
+    }
+    if (!value.STRIPE_PRICE_BASIC) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["STRIPE_PRICE_BASIC"],
+        message: "STRIPE_PRICE_BASIC is required in production"
+      });
+    }
+    if (!value.STRIPE_PRICE_PRO) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["STRIPE_PRICE_PRO"],
+        message: "STRIPE_PRICE_PRO is required in production"
+      });
+    }
   }
 });
 
