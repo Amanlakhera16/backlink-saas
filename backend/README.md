@@ -5,7 +5,7 @@ Enterprise-grade backend for a multi-tenant backlink outreach SaaS. It provides 
 ## Tech Stack
 - Node.js + Express + TypeScript
 - MongoDB (Mongoose)
-- Redis (BullMQ)
+- Redis (BullMQ, optional)
 - Stripe (Subscriptions + Webhooks)
 - OpenAI
 - JWT (Access + Refresh with rotation)
@@ -45,7 +45,6 @@ Copy `.env.example` to `.env` and fill in real values.
 
 Required keys (see `.env.example`):
 - `MONGO_URI`
-- `REDIS_URL`
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
 - `OPENAI_API_KEY`
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
@@ -54,7 +53,9 @@ Required keys (see `.env.example`):
 - `CORS_ORIGIN`
 
 Optional:
-- `USE_QUEUES` (set `true` to enable BullMQ jobs)
+- `REDIS_ENABLED` (set `true` to enable Redis)
+- `REDIS_URL` (required when `REDIS_ENABLED=true`)
+- `USE_QUEUES` (set `true` to enable BullMQ jobs; requires `REDIS_ENABLED=true`)
 
 ## Install & Run
 ```

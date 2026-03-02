@@ -7,7 +7,8 @@ const envSchema = z.object({
   NODE_ENV: z.string().default("development"),
   PORT: z.coerce.number().default(5000),
   MONGO_URI: z.string().min(1),
-  REDIS_URL: z.string().min(1),
+  REDIS_ENABLED: z.string().default("true"),
+  REDIS_URL: z.string().optional(),
   JWT_ACCESS_SECRET: z.string().min(1),
   JWT_REFRESH_SECRET: z.string().min(1),
   JWT_ISSUER: z.string().default("backlink-saas"),
@@ -27,6 +28,14 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   AI_RATE_LIMIT_MAX: z.coerce.number().default(20)
+}).superRefine((value, ctx) => {
+  if (value.REDIS_ENABLED === "true" && !value.REDIS_URL) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["REDIS_URL"],
+      message: "REDIS_URL is required when REDIS_ENABLED=true"
+    });
+  }
 });
 
 export const env = envSchema.parse(process.env);

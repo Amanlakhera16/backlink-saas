@@ -1,20 +1,28 @@
 import { Worker } from "bullmq";
-import { connection } from "./infrastructure/queue/redis";
-import { scoreProspects } from "./usecases/prospect/ScoreProspects";
-import { generateOutreach } from "./usecases/outreach/GenerateOutreach";
+import { env } from "./config/env";
+import { processAiJob, type AiJobData, type AiJobName } from "./infrastructure/queue/processor";
+import { getRedisConnection } from "./infrastructure/queue/redis";
+
+if (env.USE_QUEUES !== "true") {
+  console.warn("Queues are disabled (USE_QUEUES=false). Worker will not start.");
+  process.exit(0);
+}
+
+if (env.REDIS_ENABLED !== "true") {
+  console.warn("Redis is disabled (REDIS_ENABLED=false). Worker will not start.");
+  process.exit(0);
+}
+
+const connection = getRedisConnection();
+if (!connection) {
+  console.warn("Redis connection not available. Worker will not start.");
+  process.exit(0);
+}
 
 const worker = new Worker(
   "ai-jobs",
   async job => {
-    if (job.name === "score-prospects") {
-      await scoreProspects(job.data.campaignId, job.data.userId, { useQueue: false });
-      return;
-    }
-
-    if (job.name === "generate-outreach") {
-      await generateOutreach(job.data.campaignId, job.data.userId, { useQueue: false });
-      return;
-    }
+    await processAiJob(job.name as AiJobName, job.data as AiJobData);
   },
   { connection }
 );
